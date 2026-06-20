@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IES ECE Study Companion</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+@font-face{font-family:'Lora';src:local('Georgia');}
+:root{
+  --tracker-bg:#F0EAF8; --tracker-card:#FAF7FD; --tracker-accent:#8B5CF6; --tracker-accent2:#C4B5FD; --tracker-text:#3B1F6E;
+  --schedule-bg:#E8F4F0; --schedule-card:#F4FBF8; --schedule-accent:#0D9488; --schedule-accent2:#99E6DC; --schedule-text:#0F3830;
+  --neutral:#6B7280; --white:#FFFFFF; --shadow:0 2px 12px rgba(0,0,0,0.07); --radius:14px; --radius-sm:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;min-height:100vh;transition:background 0.4s}
+body.login-mode,body.home-mode{background:linear-gradient(135deg,#F5EEF8 0%,#EAF4F0 50%,#FEF3E8 100%)}
+body.tracker-mode{background:var(--tracker-bg)}
+body.schedule-mode{background:var(--schedule-bg)}
+
+#login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center}
+.login-logo{font-family:Georgia,serif;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#9CA3AF;margin-bottom:2rem}
+.login-title{font-family:Georgia,serif;font-size:clamp(1.8rem,5vw,2.6rem);font-weight:600;color:#2D1B69;line-height:1.3;margin-bottom:0.5rem}
+.login-title span{color:#0D9488}
+.login-sub{font-size:14px;color:#6B7280;margin-bottom:2.5rem;max-width:380px}
+.login-card{background:var(--white);border-radius:var(--radius);padding:2rem;box-shadow:0 8px 30px rgba(0,0,0,0.1);max-width:380px;width:100%}
+.login-label{font-size:12px;font-weight:600;color:#6B7280;text-align:left;display:block;margin-bottom:6px;letter-spacing:0.03em;text-transform:uppercase}
+.login-input{width:100%;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid #E5E7EB;font-size:15px;font-family:inherit;margin-bottom:14px}
+.login-input:focus{outline:none;border-color:#8B5CF6}
+.login-btn{width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:linear-gradient(90deg,#8B5CF6,#0D9488);color:white;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.login-btn:hover{opacity:0.9}
+.login-error{font-size:12px;color:#DC2626;margin-bottom:10px;min-height:16px;text-align:left}
+.login-hint{font-size:11px;color:#9CA3AF;margin-top:14px;line-height:1.5}
+.recent-users{margin-top:1.5rem;max-width:380px;width:100%}
+.recent-label{font-size:11px;color:#9CA3AF;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
+.recent-chip{display:inline-block;background:white;border:1.5px solid #E5E7EB;border-radius:20px;padding:6px 14px;font-size:13px;color:#5B21B6;margin:0 4px 8px 0;cursor:pointer}
+.recent-chip:hover{border-color:#8B5CF6;background:#F5F3FF}
+.install-banner{background:linear-gradient(90deg,#EDE9FE,#CCFBF1);border-radius:var(--radius-sm);padding:10px 16px;margin-top:1.5rem;max-width:380px;font-size:12px;color:#3B1F6E;display:none;align-items:center;gap:10px}
+.install-banner button{background:#8B5CF6;color:white;border:none;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+#home{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center}
+.home-topbar{position:absolute;top:1.25rem;right:1.5rem;display:flex;align-items:center;gap:10px;font-size:13px;color:#6B7280}
+.home-user-badge{background:white;padding:6px 14px;border-radius:20px;box-shadow:var(--shadow);font-weight:600;color:#5B21B6}
+.home-signout{background:none;border:none;color:#9CA3AF;cursor:pointer;font-size:12px;text-decoration:underline;font-family:inherit}
+.home-signout:hover{color:#6B7280}
+.home-logo{font-family:Georgia,serif;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#9CA3AF;margin-bottom:2rem}
+.home-title{font-family:Georgia,serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:600;color:#2D1B69;line-height:1.2;margin-bottom:0.75rem}
+.home-title span{color:#0D9488}
+.home-sub{font-size:15px;color:#6B7280;margin-bottom:0.5rem;max-width:420px}
+.home-quote{font-family:Georgia,serif;font-style:italic;font-size:14px;color:#9CA3AF;margin-bottom:3rem;max-width:340px}
+.home-cards{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;max-width:500px;width:100%;margin-bottom:2.5rem}
+.home-card{background:var(--white);border-radius:var(--radius);padding:2rem 1.5rem;cursor:pointer;border:2px solid transparent;transition:all 0.25s;box-shadow:var(--shadow)}
+.home-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.12)}
+.home-card.tracker-card:hover{border-color:#C4B5FD}
+.home-card.schedule-card:hover{border-color:#99E6DC}
+.home-card-icon{font-size:2.2rem;margin-bottom:0.75rem}
+.home-card-title{font-size:17px;font-weight:600;margin-bottom:0.4rem}
+.home-card.tracker-card .home-card-title{color:#5B21B6}
+.home-card.schedule-card .home-card-title{color:#0F766E}
+.home-card-desc{font-size:13px;color:#6B7280;line-height:1.5}
+.home-progress-bar{width:100%;max-width:500px;background:#E5E7EB;border-radius:20px;height:6px;overflow:hidden;margin-bottom:0.5rem}
+.home-progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#8B5CF6,#0D9488);transition:width 0.5s}
+.home-progress-label{font-size:12px;color:#9CA3AF}
+
+#navbar{position:sticky;top:0;z-index:100;padding:0.75rem 1.5rem;display:none;align-items:center;justify-content:space-between;backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.4)}
+body.tracker-mode #navbar{background:rgba(240,234,248,0.85);border-color:rgba(139,92,246,0.15)}
+body.schedule-mode #navbar{background:rgba(232,244,240,0.85);border-color:rgba(13,148,136,0.15)}
+.nav-brand{font-family:Georgia,serif;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+.nav-user-pill{font-size:11px;background:rgba(139,92,246,0.12);color:#5B21B6;padding:2px 10px;border-radius:12px;font-family:inherit;font-weight:600}
+body.tracker-mode .nav-brand{color:var(--tracker-text)}
+body.schedule-mode .nav-brand{color:var(--schedule-text)}
+.nav-tabs{display:flex;gap:6px}
+.nav-tab{padding:6px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:none}
+.nav-tab.tracker-tab{background:transparent;color:#8B5CF6}
+.nav-tab.tracker-tab.active{background:#8B5CF6;color:white}
+.nav-tab.schedule-tab{background:transparent;color:#0D9488}
+.nav-tab.schedule-tab.active{background:#0D9488;color:white}
+.nav-home{font-size:13px;cursor:pointer;color:#9CA3AF;background:none;border:none;font-family:inherit}
+.nav-home:hover{color:#6B7280}
+
+#tracker-page,#schedule-page{display:none;padding:1.5rem;max-width:900px;margin:0 auto}
+.page-header{margin-bottom:1.5rem}
+.page-header h1{font-family:Georgia,serif;font-size:1.6rem;font-weight:600;margin-bottom:0.25rem}
+body.tracker-mode .page-header h1{color:var(--tracker-text)}
+body.schedule-mode .page-header h1{color:var(--schedule-text)}
+.page-header p{font-size:13px;color:var(--neutral)}
+
+.quote-strip{border-radius:var(--radius-sm);padding:0.75rem 1rem;margin-bottom:1.25rem;font-family:Georgia,serif;font-style:italic;font-size:13px;line-height:1.6;display:flex;align-items:center;gap:8px}
+body.tracker-mode .quote-strip{background:#EDE9FE;color:#5B21B6}
+body.schedule-mode .quote-strip{background:#CCFBF1;color:#0F766E}
+.quote-icon{font-size:18px;flex-shrink:0}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.25rem}
+.stat-card{background:var(--white);border-radius:var(--radius-sm);padding:0.85rem 1rem;box-shadow:var(--shadow)}
+.stat-num{font-size:24px;font-weight:600;line-height:1}
+.stat-lbl{font-size:11px;color:var(--neutral);margin-top:4px}
+body.tracker-mode .stat-num{color:var(--tracker-accent)}
+body.schedule-mode .stat-num{color:var(--schedule-accent)}
+
+.section-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1rem;overflow:hidden}
+.section-head{display:flex;align-items:center;gap:10px;padding:1rem 1.25rem;cursor:pointer;user-select:none}
+.section-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.section-title{font-size:14px;font-weight:600;flex:1}
+body.tracker-mode .section-title{color:var(--tracker-text)}
+body.schedule-mode .section-title{color:var(--schedule-text)}
+.section-badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;flex-shrink:0}
+.badge-done{background:#D1FAE5;color:#065F46}
+.badge-partial{background:#FEF3C7;color:#92400E}
+.badge-todo{background:#F3F4F6;color:#4B5563}
+.chevron-icon{color:var(--neutral);font-size:16px;transition:transform 0.25s;flex-shrink:0}
+.chevron-icon.open{transform:rotate(180deg)}
+.section-body{display:none;border-top:1px solid #F3F4F6;padding:0 1.25rem}
+.section-body.open{display:block}
+
+.topic-header-row{display:grid;grid-template-columns:1fr 90px 180px 100px;gap:8px;padding:8px 0;border-bottom:1px solid #F3F4F6;font-size:11px;font-weight:600;color:var(--neutral);letter-spacing:0.05em}
+.topic-row{display:grid;grid-template-columns:1fr 90px 180px 100px;gap:8px;padding:10px 0;border-bottom:1px solid #FAFAFA;align-items:center}
+.topic-row:last-child{border-bottom:none}
+.topic-name{font-size:13px;color:#374151}
+.pyq-link{font-size:11px;color:#8B5CF6;text-decoration:none;display:block}
+.pyq-link:hover{text-decoration:underline}
+body.schedule-mode .pyq-link{color:#0D9488}
+.book-ref{font-size:11px;color:#6B7280;line-height:1.4}
+.status-select{font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid #E5E7EB;background:white;cursor:pointer;width:100%}
+.status-select.done{background:#D1FAE5;border-color:#6EE7B7;color:#065F46}
+.status-select.in-progress{background:#FEF3C7;border-color:#FDE68A;color:#92400E}
+.status-select.not-started{background:#F9FAFB;border-color:#E5E7EB;color:#6B7280}
+
+.month-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1rem;overflow:hidden}
+.month-head{display:flex;align-items:center;gap:10px;padding:1rem 1.25rem;cursor:pointer;user-select:none}
+.month-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.month-title{font-size:14px;font-weight:600;flex:1;color:var(--schedule-text)}
+.month-theme{font-size:12px;color:var(--neutral)}
+.month-status{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px}
+.month-body{display:none;border-top:1px solid #F3F4F6;padding:1rem 1.25rem}
+.month-body.open{display:block}
+.week-item{display:grid;grid-template-columns:110px 1fr 120px;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid #F9FAFB;font-size:13px}
+.week-item:last-of-type{border-bottom:none}
+.week-label{font-size:12px;font-weight:600;color:var(--schedule-accent)}
+.week-task{color:#374151;line-height:1.5}
+.week-status-sel{font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid #E5E7EB;background:white;cursor:pointer;width:100%}
+.week-status-sel.done{background:#D1FAE5;border-color:#6EE7B7;color:#065F46}
+.week-status-sel.in-progress{background:#CFFAFE;border-color:#A5F3FC;color:#164E63}
+.week-status-sel.pending{background:#F9FAFB;border-color:#E5E7EB;color:#6B7280}
+.gs-tip{margin-top:10px;padding:8px 12px;background:#F0FDF9;border-left:3px solid var(--schedule-accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:12px;color:#0F766E;line-height:1.5}
+
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1F2937;color:white;padding:12px 20px;border-radius:var(--radius-sm);font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,0.2);transform:translateY(100px);opacity:0;transition:all 0.35s;max-width:300px;z-index:999;line-height:1.5}
+#toast.show{transform:translateY(0);opacity:1}
+
+.reminder-banner{background:linear-gradient(90deg,#FFF7ED,#FEF3C7);border:1px solid #FDE68A;border-radius:var(--radius-sm);padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:13px;color:#92400E;display:flex;align-items:center;gap:8px}
+.reminder-banner span{flex:1}
+
+.spinner{width:28px;height:28px;border:3px solid #E5E7EB;border-top-color:#8B5CF6;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fullscreen-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:14px}
+.fullscreen-loading p{font-size:13px;color:#9CA3AF}
+
+@media(max-width:640px){
+  .topic-header-row,.topic-row{grid-template-columns:1fr 80px}
+  .topic-header-row .book-col,.topic-row .book-ref,
+  .topic-header-row .pyq-col,.topic-row .pyq-link{display:none}
+  .home-cards{grid-template-columns:1fr}
+  .week-item{grid-template-columns:90px 1fr}
+  .week-item .week-status-sel{display:none}
+  .home-topbar{position:static;justify-content:center;margin-bottom:1.5rem}
+}
+</style>
+</head>
+<body class="login-mode">
+
+<div id="boot-loading" class="fullscreen-loading">
+  <div class="spinner"></div>
+  <p>Loading your study companion...</p>
+</div>
+
+<div id="login" style="display:none">
+  <div class="login-logo">IES ECE Study Companion</div>
+  <h1 class="login-title">Sign in to track<br>your <span>own</span> progress</h1>
+  <p class="login-sub">Each person gets their own private tracker, saved on this device. Just enter a name — no password needed.</p>
+  <div class="login-card">
+    <label class="login-label">Your name</label>
+    <input type="text" id="username-input" class="login-input" placeholder="e.g. Sandhiya" autocomplete="off" maxlength="30">
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" id="login-btn" onclick="handleLogin()">Continue →</button>
+    <div class="login-hint">Your data is stored only on this device. Installing this app (see banner below) keeps it safe even if you clear your browser.</div>
+  </div>
+  <div class="recent-users" id="recent-users" style="display:none">
+    <div class="recent-label">Continue as</div>
+    <div id="recent-chips"></div>
+  </div>
+  <div class="install-banner" id="install-banner">
+    <span>📲 Install this as an app on your device — works offline, no browser bar.</span>
+    <button onclick="triggerInstall()">Install</button>
+  </div>
+</div>
+
+<div id="home">
+  <div class="home-topbar">
+    <span class="home-user-badge" id="home-user-badge"></span>
+    <button class="home-signout" onclick="signOut()">Sign out</button>
+  </div>
+  <div class="home-logo">IES ECE Study Companion</div>
+  <h1 class="home-title">Your IES journey<br>starts <span>today</span></h1>
+  <p class="home-sub">Built for ECE students preparing for UPSC Engineering Services Examination.</p>
+  <p class="home-quote">"The secret of getting ahead is getting started." — Mark Twain</p>
+  <div class="home-cards">
+    <div class="home-card tracker-card" onclick="openPage('tracker')">
+      <div class="home-card-icon">📚</div>
+      <div class="home-card-title">Topic Tracker</div>
+      <div class="home-card-desc">Track your PYQ practice across all ECE topics with book references and status updates.</div>
+    </div>
+    <div class="home-card schedule-card" onclick="openPage('schedule')">
+      <div class="home-card-icon">🗓️</div>
+      <div class="home-card-title">Monthly Schedule</div>
+      <div class="home-card-desc">Your week-by-week 3rd year study plan from July 2025 to April 2026.</div>
+    </div>
+  </div>
+  <div class="home-progress-bar"><div class="home-progress-fill" id="home-prog" style="width:0%"></div></div>
+  <div class="home-progress-label" id="home-prog-label">Overall progress: 0% complete</div>
+</div>
+
+<nav id="navbar">
+  <div class="nav-brand">IES ECE Companion <span class="nav-user-pill" id="nav-user-pill"></span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab tracker-tab" onclick="openPage('tracker')">📚 Tracker</button>
+    <button class="nav-tab schedule-tab" onclick="openPage('schedule')">🗓️ Schedule</button>
+  </div>
+  <button class="nav-home" onclick="goHome()">← Home</button>
+</nav>
+
+<div id="tracker-page">
+  <div class="page-header">
+    <h1>PYQ Topic Tracker</h1>
+    <p>Mark your progress for each topic. Books to refer and PYQ links included.</p>
+  </div>
+  <div class="quote-strip"><span class="quote-icon">✨</span><span id="tracker-quote-text"></span></div>
+  <div class="reminder-banner" id="tracker-reminder" style="display:none"><span>⏰</span><span id="tracker-reminder-text"></span></div>
+  <div class="stats-row" id="tracker-stats"></div>
+  <div id="tracker-sections"></div>
+</div>
+
+<div id="schedule-page">
+  <div class="page-header">
+    <h1>Monthly Study Schedule</h1>
+    <p>July 2025 → April 2026 — 3rd year IES prep plan alongside GATE coaching.</p>
+  </div>
+  <div class="quote-strip"><span class="quote-icon">🌿</span><span id="schedule-quote-text"></span></div>
+  <div class="reminder-banner" id="schedule-reminder" style="display:none"><span>⏰</span><span id="schedule-reminder-text"></span></div>
+  <div class="stats-row" id="schedule-stats"></div>
+  <div id="schedule-months"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ====================================================================
+   STORAGE LAYER — IndexedDB (works fully offline, no server needed)
+   Replaces the Claude-only window.storage so this runs standalone.
+==================================================================== */
+const DB_NAME = 'ies_companion_db';
+const STORE = 'userdata';
+let dbPromise = null;
+
+function openDB(){
+  if(dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve,reject)=>{
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e)=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+  return dbPromise;
+}
+async function idbGet(key){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(STORE,'readonly');
+    const req = tx.objectStore(STORE).get(key);
+    req.onsuccess = ()=>resolve(req.result || null);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbSet(key,value){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(value,key);
+    tx.oncomplete = ()=>resolve(true);
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+
+/* ====================================================================
+   APP LOGIC
+==================================================================== */
+const LAST_USER_KEY = '_ies_last_user';
+const RECENT_USERS_KEY = '_ies_recent_users';
+
+let currentUser = null;
+let state = {};
+
+function normalizeUsername(raw){ return raw.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\-]/g,''); }
+function displayName(raw){ return raw.trim(); }
+function dataKeyFor(user){ return `userdata:${user}`; }
+
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.innerHTML = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+function getRecentUsersLocal(){
+  try{ return JSON.parse(localStorage.getItem(RECENT_USERS_KEY)||'[]'); }catch(e){ return []; }
+}
+function addRecentUserLocal(user, label){
+  try{
+    let list = getRecentUsersLocal().filter(u=>u.id!==user);
+    list.unshift({id:user, label:label});
+    list = list.slice(0,5);
+    localStorage.setItem(RECENT_USERS_KEY, JSON.stringify(list));
+  }catch(e){}
+}
+
+async function loadUserData(user){
+  try{
+    const val = await idbGet(dataKeyFor(user));
+    return val ? JSON.parse(val) : {};
+  }catch(e){ return {}; }
+}
+async function saveUserData(user, data){
+  try{ await idbSet(dataKeyFor(user), JSON.stringify(data)); }
+  catch(e){ toast('⚠️ Could not save right now.'); }
+}
+
+async function handleLogin(){
+  const raw = document.getElementById('username-input').value;
+  const errEl = document.getElementById('login-error');
+  const norm = normalizeUsername(raw);
+  if(!norm){ errEl.textContent = 'Please enter a name (letters and numbers only).'; return; }
+  errEl.textContent='';
+  document.getElementById('login-btn').textContent = 'Signing in...';
+  document.getElementById('login-btn').disabled = true;
+  await signInAs(norm, displayName(raw));
+}
+async function signInAs(userId, label){
+  currentUser = userId;
+  state = await loadUserData(userId);
+  try{ localStorage.setItem(LAST_USER_KEY, JSON.stringify({id:userId,label:label||userId})); }catch(e){}
+  addRecentUserLocal(userId, label||userId);
+  showHome(label||userId);
+}
+function signOut(){
+  currentUser = null;
+  state = {};
+  try{ localStorage.removeItem(LAST_USER_KEY); }catch(e){}
+  showLogin();
+}
+function showLogin(){
+  document.getElementById('boot-loading').style.display='none';
+  document.getElementById('home').style.display='none';
+  document.getElementById('navbar').style.display='none';
+  document.getElementById('tracker-page').style.display='none';
+  document.getElementById('schedule-page').style.display='none';
+  document.getElementById('login').style.display='flex';
+  document.body.className='login-mode';
+  document.getElementById('username-input').value='';
+  document.getElementById('login-error').textContent='';
+  document.getElementById('login-btn').textContent='Continue →';
+  document.getElementById('login-btn').disabled=false;
+  const recents = getRecentUsersLocal();
+  const wrap = document.getElementById('recent-users');
+  const chipsEl = document.getElementById('recent-chips');
+  if(recents.length){
+    wrap.style.display='block';
+    chipsEl.innerHTML = recents.map(u=>`<span class="recent-chip" onclick="quickSignIn('${u.id}','${(u.label||u.id).replace(/'/g,"")}')">${u.label||u.id}</span>`).join('');
+  } else { wrap.style.display='none'; }
+  setTimeout(()=>document.getElementById('username-input').focus(), 100);
+}
+async function quickSignIn(userId, label){
+  document.getElementById('login').style.display='none';
+  document.getElementById('boot-loading').style.display='flex';
+  document.querySelector('#boot-loading p').textContent = `Loading ${label}'s progress...`;
+  await signInAs(userId, label);
+}
+function showHome(label){
+  document.getElementById('boot-loading').style.display='none';
+  document.getElementById('login').style.display='none';
+  document.getElementById('home-user-badge').textContent = '👤 ' + label;
+  document.getElementById('nav-user-pill').textContent = label;
+  renderTrackerSections();
+  renderTrackerStats();
+  renderScheduleMonths();
+  renderScheduleStats();
+  setQuotes();
+  updateHomeProg();
+  history.replaceState({page:'home'}, '', '#home');
+  goHome(false);
+}
+async function boot(){
+  let last = null;
+  try{ last = JSON.parse(localStorage.getItem(LAST_USER_KEY)||'null'); }catch(e){}
+  if(last && last.id){
+    document.querySelector('#boot-loading p').textContent = `Welcome back, ${last.label}...`;
+    await signInAs(last.id, last.label);
+  } else { showLogin(); }
+}
+
+const TRACKER_QUOTES = [
+  "Small steps every day lead to big results. Keep going! 💜",
+  "Every topic you master brings you one step closer to your IES badge.",
+  "Discipline today, freedom tomorrow. You're on the right path!",
+  "Consistency beats intensity. Show up every day.",
+  "The exam doesn't care about your mood — but your habits care about your future.",
+  "One topic at a time. One day at a time. One goal: IES.",
+  "You chose the harder path. That's exactly why you'll make it.",
+  "Engineering the nation starts with engineering your preparation.",
+];
+const SCHEDULE_QUOTES = [
+  "A goal without a plan is just a wish. You have both. 🌿",
+  "Every week completed is a week closer to your dream posting.",
+  "Stick to the schedule and the schedule will take care of the rank.",
+  "July to April — ten months that can change your life.",
+  "Future IES Officer — it starts right now.",
+  "Your 3rd year choices will define your 4th year opportunities.",
+];
+const APPRECIATE = {
+  10:"Great start! You've begun your journey. 🌱",
+  25:"25% done! You're building solid momentum. 💪",
+  50:"Halfway there! This is where toppers are made. ⭐",
+  75:"75% complete! The finish line is in sight. 🔥",
+  90:"Almost there! Push through these last steps. 🚀",
+  100:"100%! Incredible discipline. You're ready! 🏆"
+};
+const TOPICS = [
+  {sec:'Paper I — General Studies',color:'#8B5CF6',topics:[
+    {n:'Current Affairs',book:'Made Easy GS Book for ESE (Chapter 1)',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Engineering Mathematics',book:'Made Easy GS Book + Erwin Kreyszig',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Logical Reasoning',book:'R.S. Aggarwal — Verbal & Non-Verbal Reasoning',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Engineering Ethics',book:'Made Easy GS Book (Ethics Chapter)',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Energy & Environment',book:'Made Easy GS Book (Environment Chapter)',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Design & Drawing Principles',book:'N.D. Bhatt — Engineering Drawing',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Project Management',book:'Made Easy GS Book (PM Chapter)',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Material Science Basics',book:'V. Raghavan — Materials Science',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Networks & Signals',color:'#0D9488',topics:[
+    {n:'KVL, KCL, Mesh & Nodal Analysis',book:'A. Chakrabarti — Circuit Theory',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Laplace Transform Analysis',book:'Chakrabarti / Hayt & Kemmerly',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Two-port Network Parameters',book:'A. Chakrabarti — Circuit Theory',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'RLC Transient Analysis',book:'Hayt & Kemmerly — Engineering Circuit Analysis',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'State Equations',book:'Signals & Systems — Oppenheim & Willsky',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Wye-Delta Transformation',book:'A. Chakrabarti — Circuit Theory',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Analog & Digital Circuits',color:'#D97706',topics:[
+    {n:'BJT & FET Amplifiers',book:'Sedra & Smith — Microelectronic Circuits',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Feedback Amplifiers & Oscillators',book:'Sedra & Smith / Razavi',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Op-Amp Applications',book:'Gayakwad — Op-Amps & Linear ICs',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Active Filters & Timers',book:'Gayakwad — Op-Amps & Linear ICs',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Boolean Algebra & Logic Gates',book:'Morris Mano — Digital Design',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Combinational Circuits',book:'Morris Mano — Digital Design',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Sequential Circuits & State Machines',book:'Morris Mano — Digital Design',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'A/D & D/A Converters',book:'Ramakant Gayakwad / Floyd',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Electronic Devices',color:'#DC2626',topics:[
+    {n:'Semiconductor Physics',book:'Streetman & Banerjee — Solid State Electronic Devices',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'P-N Junction Diodes',book:'Boylestad & Nashelsky — Electronic Devices',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'BJT Characteristics',book:'Sedra & Smith / Boylestad',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'MOSFET & JFET',book:'Sedra & Smith — Microelectronic Circuits',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Optoelectronic Devices',book:'Saleh & Teich — Photonics',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'IC Fabrication Basics',book:'Neamen — Semiconductor Physics & Devices',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Control Systems',color:'#7C3AED',topics:[
+    {n:'Transfer Functions & Block Diagrams',book:'Nagrath & Gopal — Control Systems Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Signal Flow Graphs',book:'Nagrath & Gopal / Ogata',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Routh-Hurwitz Criterion',book:'Ogata — Modern Control Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Root Locus Technique',book:'Ogata — Modern Control Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Bode Plots',book:'Nagrath & Gopal / Ogata',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Nyquist Criterion',book:'Ogata — Modern Control Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Lead/Lag Compensators & PID',book:'Ogata / Nagrath & Gopal',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Communication Systems',color:'#0891B2',topics:[
+    {n:'AM & FM Modulation',book:'Haykin — Communication Systems',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Noise Analysis & SNR',book:'Haykin / Lathi — Modern Digital & Analog Comm',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Sampling & Quantization',book:'Lathi — Modern Digital & Analog Comm Systems',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'PCM & DPCM',book:'Lathi / Haykin',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Digital Modulation (ASK/FSK/PSK)',book:'Haykin — Communication Systems',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'TDMA, FDMA, CDMA',book:'Rappaport — Wireless Communications',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Information Theory & Entropy',book:'Haykin / Proakis',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Optical Fibre Communication',book:'Keiser — Optical Fiber Communications',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Electromagnetics',color:'#BE185D',topics:[
+    {n:'Maxwell Equations & Vector Calculus',book:'Hayt & Buck — Engineering Electromagnetics',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Plane Wave Propagation',book:'Hayt & Buck / Sadiku',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Transmission Lines & Smith Chart',book:'Pozar — Microwave Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Rectangular Waveguides',book:'Pozar — Microwave Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Antenna Basics & Radiation',book:'Balanis — Antenna Theory',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Dipole, Monopole & Arrays',book:'Balanis — Antenna Theory',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Measurements & Instrumentation',color:'#059669',topics:[
+    {n:'Principles & Errors of Measurement',book:'A.K. Sawhney — Electrical Measurements',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Analog & Digital Instruments',book:'A.K. Sawhney / Golding & Widdis',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Transducers & Sensors',book:'D. Patranabis — Sensors & Transducers',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Signal Conditioning & DAQ',book:'A.K. Sawhney — Electrical Measurements',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'CRO & Spectrum Analyzer',book:'A.K. Sawhney / Bakshi',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'VLSI & DSP',color:'#6D28D9',topics:[
+    {n:'VLSI Fabrication Process',book:'Weste & Harris — CMOS VLSI Design',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'CMOS Circuit Design',book:'Weste & Harris / Razavi',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'PLA & ROM-based Design',book:'Morris Mano — Digital Design',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'DSP Fundamentals & DFT/FFT',book:'Proakis & Manolakis — DSP',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'FIR Filter Design',book:'Proakis & Manolakis — DSP',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'IIR Filter Design',book:'Proakis & Manolakis / Oppenheim & Schafer',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Computer Organization',color:'#374151',topics:[
+    {n:'CPU Architecture & Data Path',book:'Patterson & Hennessy — Computer Organization',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Memory Organization & Cache',book:'Patterson & Hennessy / Morris Mano',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'OS — Process & Memory Management',book:'Silberschatz — Operating System Concepts',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Database Concepts',book:'Ramakrishnan — Database Management Systems',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Computer Networks — OSI & TCP/IP',book:'Forouzan — Data Communications & Networking',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Materials Science',color:'#92400E',topics:[
+    {n:'Crystal Structures & Bonding',book:'V. Raghavan — Materials Science & Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Electrical Engineering Materials',book:'A.J. Dekker — Solid State Physics',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Magnetic Materials & Ferrites',book:'V. Raghavan / A.J. Dekker',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Nanomaterials & Superconductivity',book:'V. Raghavan — Materials Science & Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+  {sec:'Basic Electrical Engineering',color:'#1D4ED8',topics:[
+    {n:'DC Circuit Analysis',book:'Hayt & Kemmerly — Engineering Circuit Analysis',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Single-phase AC Circuits',book:'Nagrath & Kothari — Basic Electrical Engineering',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Transformers',book:'Nagrath & Kothari — Electric Machines',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'DC & Induction Machines',book:'Nagrath & Kothari — Electric Machines',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+    {n:'Synchronous Machines',book:'Nagrath & Kothari — Electric Machines',pyq:'https://testbook.com/upsc-ies/previous-year-papers'},
+  ]},
+];
+const MONTHS = [
+  {month:'July 2025',color:'#8B5CF6',theme:'Foundation Start',weeks:[
+    {w:'Week 1–2',t:'Network Theory — KVL, KCL, mesh/nodal analysis, Thevenin/Norton'},
+    {w:'Week 3–4',t:'Signals & Systems — LTI systems, convolution, Fourier series'},
+  ],gs:'Start The Hindu daily (30 min). Buy Made Easy GS Book. Note current affairs.'},
+  {month:'August 2025',color:'#0D9488',theme:'Core Electronics',weeks:[
+    {w:'Week 1–2',t:'Electronic Devices — diodes, BJT, MOSFET characteristics'},
+    {w:'Week 3–4',t:'Analog Circuits — amplifiers, biasing, feedback amplifiers'},
+  ],gs:'GS: Current affairs notes. Solve IES PYQs for Networks topic-wise.'},
+  {month:'September 2025',color:'#D97706',theme:'Digital & Measurements',weeks:[
+    {w:'Week 1–2',t:'Digital Circuits — combinational (MUX, encoder, adder, decoder)'},
+    {w:'Week 3–4',t:'Electronic Measurements — instruments, transducers, error analysis'},
+  ],gs:'GS: Engineering ethics & design principles. Attempt 1 IES Prelims Paper I mock.'},
+  {month:'October 2025',color:'#DC2626',theme:'Control Systems',weeks:[
+    {w:'Week 1–2',t:'Control Systems — transfer functions, block diagrams, signal flow graphs'},
+    {w:'Week 3–4',t:'Stability — Routh-Hurwitz, root locus, Bode & Nyquist plots'},
+  ],gs:'Solve 5 years IES Control Systems PYQs. Practice 2–3 Mains descriptive answers.'},
+  {month:'November 2025',color:'#0891B2',theme:'Communications I',weeks:[
+    {w:'Week 1–2',t:'Analog Communication — AM, FM, PM modulation & demodulation'},
+    {w:'Week 3–4',t:'Noise analysis, SNR comparison, receiver design'},
+  ],gs:'GS: Energy & environment chapter. Revise Networks + Devices with PYQs.'},
+  {month:'December 2025',color:'#6D28D9',theme:'Revision + Mock',weeks:[
+    {w:'Week 1–2',t:'Revision — Networks, Analog Circuits, Control Systems (PYQ sweep)'},
+    {w:'Week 3–4',t:'Full Prelims Mock Test (Paper I + II) — analyse & plug weak areas'},
+  ],gs:'Holiday target: Complete GS Book Part 1 (current affairs + ethics). Rest well.'},
+  {month:'January 2026',color:'#BE185D',theme:'Electromagnetics',weeks:[
+    {w:'Week 1–2',t:'Electromagnetics — Maxwell equations, wave propagation, transmission lines'},
+    {w:'Week 3–4',t:'Waveguides, antennas, Smith chart, microwave basics'},
+  ],gs:'GS: Project management & material science chapter. IES EM PYQs (2018–2024).'},
+  {month:'February 2026',color:'#059669',theme:'Digital Comm + Sequential',weeks:[
+    {w:'Week 1–2',t:'Digital Communication — sampling, PCM, ASK/FSK/PSK, CDMA/TDMA'},
+    {w:'Week 3–4',t:'Sequential circuits — flip-flops, counters, state machines, registers'},
+  ],gs:'1 full Prelims mock test. Write 5 Mains descriptive answers (Comm topic).'},
+  {month:'March 2026',color:'#92400E',theme:'Materials + Basic EE',weeks:[
+    {w:'Week 1–2',t:'Materials Science — crystal structures, magnetic & nanomaterials, superconductivity'},
+    {w:'Week 3–4',t:'Basic Electrical Engineering — DC circuits, transformers, machines (IES-only topic!)'},
+  ],gs:'Basic EE is IES-only (not GATE ECE) — dedicate extra time here.'},
+  {month:'April 2026',color:'#1D4ED8',theme:'Consolidation & Mock Blitz',weeks:[
+    {w:'Week 1–2',t:'Full syllabus revision — topic-wise PYQ sweep across all sections'},
+    {w:'Week 3–4',t:'2 full Prelims mocks + Mains writing practice (3 descriptive answers/week)'},
+  ],gs:'Track your PYQ Tracker completion. Fix all red areas before semester exams.'},
+];
+
+function trackerProgress(){
+  let total=0, done=0, inprog=0;
+  TOPICS.forEach((sec,si)=>{ sec.topics.forEach((_,ti)=>{ const k=`t_${si}_${ti}`; total++; if(state[k]==='done') done++; else if(state[k]==='in-progress') inprog++; }); });
+  return {total,done,inprog,pct:total?Math.round(done/total*100):0};
+}
+function secProgress(si){
+  let t=0,d=0;
+  TOPICS[si].topics.forEach((_,ti)=>{ t++; if(state[`t_${si}_${ti}`]==='done') d++; });
+  return {t,d,pct:t?Math.round(d/t*100):0};
+}
+function scheduleProgress(){
+  let total=0, done=0;
+  MONTHS.forEach((m,mi)=>{ m.weeks.forEach((_,wi)=>{ total++; if(state[`s_${mi}_${wi}`]==='done') done++; }); });
+  return {total,done,pct:total?Math.round(done/total*100):0};
+}
+function updateHomeProg(){
+  const tp = trackerProgress(); const sp = scheduleProgress();
+  const overall = Math.round((tp.pct + sp.pct)/2);
+  document.getElementById('home-prog').style.width = overall+'%';
+  document.getElementById('home-prog-label').textContent = `Overall progress: ${overall}% complete`;
+}
+function renderTrackerStats(){
+  const {total,done,inprog,pct} = trackerProgress();
+  document.getElementById('tracker-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${done}</div><div class="stat-lbl">Topics done</div></div>
+    <div class="stat-card"><div class="stat-num">${inprog}</div><div class="stat-lbl">In progress</div></div>
+    <div class="stat-card"><div class="stat-num">${total-done-inprog}</div><div class="stat-lbl">Not started</div></div>
+    <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-lbl">Complete</div></div>`;
+}
+function renderTrackerSections(){
+  const el = document.getElementById('tracker-sections');
+  el.innerHTML = '';
+  TOPICS.forEach((sec,si)=>{
+    const {pct} = secProgress(si);
+    const badge = pct===100?'done':pct>0?'partial':'todo';
+    const badgeText = pct===100?'✓ Complete':pct>0?`${pct}% done`:'Not started';
+    const div = document.createElement('div');
+    div.className = 'section-card';
+    div.innerHTML = `
+      <div class="section-head" onclick="toggleSec(this,'sec-body-${si}')">
+        <div class="section-dot" style="background:${sec.color}"></div>
+        <span class="section-title">${sec.sec}</span>
+        <span class="section-badge badge-${badge}">${badgeText}</span>
+        <span class="chevron-icon" id="chev-${si}">▾</span>
+      </div>
+      <div class="section-body" id="sec-body-${si}">
+        <div class="topic-header-row"><span>Topic</span><span class="book-col">Reference Book</span><span class="pyq-col">PYQ Link</span><span>Status</span></div>
+        ${sec.topics.map((topic,ti)=>{
+          const k=`t_${si}_${ti}`; const st=state[k]||'not-started';
+          return `<div class="topic-row">
+            <span class="topic-name">${topic.n}</span>
+            <span class="book-ref">${topic.book}</span>
+            <a class="pyq-link" href="${topic.pyq}" target="_blank">IES PYQs →</a>
+            <select class="status-select ${st}" onchange="updateTopic(${si},${ti},this)">
+              <option value="not-started" ${st==='not-started'?'selected':''}>Not started</option>
+              <option value="in-progress" ${st==='in-progress'?'selected':''}>In progress</option>
+              <option value="done" ${st==='done'?'selected':''}>Done ✓</option>
+            </select></div>`;
+        }).join('')}
+      </div>`;
+    el.appendChild(div);
+  });
+}
+function toggleSec(head, bodyId){
+  const body = document.getElementById(bodyId);
+  const si = bodyId.replace('sec-body-','');
+  document.getElementById('chev-'+si).classList.toggle('open');
+  body.classList.toggle('open');
+}
+async function updateTopic(si,ti,sel){
+  const k=`t_${si}_${ti}`; const prev = trackerProgress().pct;
+  state[k]=sel.value; sel.className='status-select '+sel.value;
+  await saveUserData(currentUser, state);
+  renderTrackerStats(); updateHomeProg(); updateSectionBadge(si);
+  const curr = trackerProgress().pct; checkAppreciate(curr, prev);
+  if(sel.value==='done') toast('✅ Topic marked done! Great work, keep going! 💜');
+  else if(sel.value==='in-progress') toast('📖 Topic in progress — you\'re on it!');
+}
+function updateSectionBadge(si){
+  const {pct} = secProgress(si);
+  const badge = document.querySelector(`#sec-body-${si}`).previousElementSibling.querySelector('.section-badge');
+  badge.className = 'section-badge badge-'+(pct===100?'done':pct>0?'partial':'todo');
+  badge.textContent = pct===100?'✓ Complete':pct>0?`${pct}% done`:'Not started';
+}
+function renderScheduleStats(){
+  const {total,done,pct} = scheduleProgress();
+  document.getElementById('schedule-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${done}</div><div class="stat-lbl">Weeks done</div></div>
+    <div class="stat-card"><div class="stat-num">${total-done}</div><div class="stat-lbl">Weeks remaining</div></div>
+    <div class="stat-card"><div class="stat-num">${MONTHS.length}</div><div class="stat-lbl">Months total</div></div>
+    <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-lbl">Schedule done</div></div>`;
+}
+function renderScheduleMonths(){
+  const el = document.getElementById('schedule-months');
+  el.innerHTML = '';
+  MONTHS.forEach((m,mi)=>{
+    let allDone = m.weeks.every((_,wi)=>state[`s_${mi}_${wi}`]==='done');
+    let anyDone = m.weeks.some((_,wi)=>state[`s_${mi}_${wi}`]==='done'||state[`s_${mi}_${wi}`]==='in-progress');
+    const badge = allDone?'done':anyDone?'partial':'todo';
+    const badgeText = allDone?'✓ Complete':anyDone?'In progress':'Upcoming';
+    const div = document.createElement('div');
+    div.className = 'month-card';
+    div.innerHTML = `
+      <div class="month-head" onclick="toggleMonth(this,'month-body-${mi}')">
+        <div class="month-dot" style="background:${m.color}"></div>
+        <span class="month-title">${m.month}</span>
+        <span class="month-theme">${m.theme}</span>
+        <span class="month-status" style="background:${badge==='done'?'#D1FAE5':badge==='partial'?'#FEF3C7':'#F3F4F6'};color:${badge==='done'?'#065F46':badge==='partial'?'#92400E':'#4B5563'}">${badgeText}</span>
+        <span class="chevron-icon" id="mchev-${mi}">▾</span>
+      </div>
+      <div class="month-body" id="month-body-${mi}">
+        ${m.weeks.map((w,wi)=>{
+          const k=`s_${mi}_${wi}`; const st=state[k]||'pending';
+          return `<div class="week-item">
+            <span class="week-label">${w.w}</span>
+            <span class="week-task">${w.t}</span>
+            <select class="week-status-sel ${st}" onchange="updateWeek(${mi},${wi},this)">
+              <option value="pending" ${st==='pending'?'selected':''}>Pending</option>
+              <option value="in-progress" ${st==='in-progress'?'selected':''}>In progress</option>
+              <option value="done" ${st==='done'?'selected':''}>Done ✓</option>
+            </select></div>`;
+        }).join('')}
+        <div class="gs-tip">🌿 <strong>GS + Extra:</strong> ${m.gs}</div>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+function toggleMonth(head, bodyId){
+  document.getElementById(bodyId).classList.toggle('open');
+  const mi = bodyId.replace('month-body-','');
+  document.getElementById('mchev-'+mi).classList.toggle('open');
+}
+async function updateWeek(mi,wi,sel){
+  const k=`s_${mi}_${wi}`; const prev = scheduleProgress().pct;
+  state[k]=sel.value; sel.className='week-status-sel '+sel.value;
+  await saveUserData(currentUser, state);
+  renderScheduleStats(); updateHomeProg();
+  const curr = scheduleProgress().pct; checkAppreciate(curr, prev);
+  if(sel.value==='done') toast('🗓️ Week completed! You\'re ahead of most aspirants. 🌿');
+  else if(sel.value==='in-progress') toast('⚡ Week in progress — stay consistent!');
+  updateMonthBadge(mi);
+}
+function updateMonthBadge(mi){
+  const m = MONTHS[mi];
+  const allDone = m.weeks.every((_,wi)=>state[`s_${mi}_${wi}`]==='done');
+  const anyDone = m.weeks.some((_,wi)=>state[`s_${mi}_${wi}`]==='done'||state[`s_${mi}_${wi}`]==='in-progress');
+  const badge = allDone?'done':anyDone?'partial':'todo';
+  const badgeText = allDone?'✓ Complete':anyDone?'In progress':'Upcoming';
+  const el = document.querySelector(`#month-body-${mi}`).previousElementSibling.querySelector('.month-status');
+  el.textContent = badgeText;
+  el.style.background = badge==='done'?'#D1FAE5':badge==='partial'?'#FEF3C7':'#F3F4F6';
+  el.style.color = badge==='done'?'#065F46':badge==='partial'?'#92400E':'#4B5563';
+}
+function checkAppreciate(pct, prev){
+  [10,25,50,75,90,100].forEach(m=>{ if(prev < m && pct >= m) toast('🎉 ' + APPRECIATE[m]); });
+}
+function showReminders(){
+  const {done:td, total:tt} = trackerProgress();
+  const {done:sd, total:st} = scheduleProgress();
+  const trEl = document.getElementById('tracker-reminder');
+  const scEl = document.getElementById('schedule-reminder');
+  if(td===0){ trEl.style.display='flex'; document.getElementById('tracker-reminder-text').textContent = "You haven't marked any topic yet — start with Networks or GS today!"; }
+  else if(td < tt*0.5){ trEl.style.display='flex'; document.getElementById('tracker-reminder-text').textContent = `${tt-td} topics still need your attention. Keep up the daily habit!`; }
+  else { trEl.style.display='none'; }
+  if(sd===0){ scEl.style.display='flex'; document.getElementById('schedule-reminder-text').textContent = "Mark your first week as done once you start — it feels great!"; }
+  else if(sd < st){ scEl.style.display='flex'; document.getElementById('schedule-reminder-text').textContent = `${st-sd} weeks left in your 3rd year plan. Stay on track!`; }
+  else { scEl.style.display='none'; }
+}
+function setQuotes(){
+  document.getElementById('tracker-quote-text').textContent = TRACKER_QUOTES[Math.floor(Math.random()*TRACKER_QUOTES.length)];
+  document.getElementById('schedule-quote-text').textContent = SCHEDULE_QUOTES[Math.floor(Math.random()*SCHEDULE_QUOTES.length)];
+}
+function openPage(page, pushState){
+  document.getElementById('home').style.display='none';
+  document.getElementById('navbar').style.display='flex';
+  document.getElementById('tracker-page').style.display='none';
+  document.getElementById('schedule-page').style.display='none';
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(page==='tracker'){
+    document.body.className='tracker-mode';
+    document.getElementById('tracker-page').style.display='block';
+    document.querySelector('.tracker-tab').classList.add('active');
+  } else {
+    document.body.className='schedule-mode';
+    document.getElementById('schedule-page').style.display='block';
+    document.querySelector('.schedule-tab').classList.add('active');
+  }
+  showReminders();
+  if(pushState!==false){
+    history.pushState({page:page}, '', '#'+page);
+  }
+}
+function goHome(pushState){
+  document.getElementById('home').style.display='flex';
+  document.getElementById('navbar').style.display='none';
+  document.getElementById('tracker-page').style.display='none';
+  document.getElementById('schedule-page').style.display='none';
+  document.body.className='home-mode';
+  updateHomeProg();
+  if(pushState!==false){
+    history.pushState({page:'home'}, '', '#home');
+  }
+}
+
+/* ---- Phone/browser back button support ----
+   Pressing back on Tracker or Schedule returns to Home
+   instead of leaving the app or doing nothing. */
+window.addEventListener('popstate', (e)=>{
+  const targetPage = e.state ? e.state.page : 'home';
+  if(targetPage==='tracker' || targetPage==='schedule'){
+    openPage(targetPage, false);
+  } else {
+    goHome(false);
+  }
+});
+
+/* ---- PWA install prompt ---- */
+let deferredInstallEvent = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallEvent = e;
+  const banner = document.getElementById('install-banner');
+  if(banner) banner.style.display='flex';
+});
+function triggerInstall(){
+  if(deferredInstallEvent){ deferredInstallEvent.prompt(); deferredInstallEvent = null; }
+}
+
+/* ---- Register service worker (offline support) ---- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{ /* fine if missing in dev */ });
+  });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const input = document.getElementById('username-input');
+  if(input) input.addEventListener('keydown',(e)=>{ if(e.key==='Enter') handleLogin(); });
+});
+
+boot();
+</script>
+<footer style="text-align:center; margin-top:20px;">
+    © 2026 Sandhiya
+</footer>
+</body>
+</html>
